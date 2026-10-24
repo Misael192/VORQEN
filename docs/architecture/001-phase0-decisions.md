@@ -9,7 +9,7 @@ A plataforma VORQEN precisa iniciar com um monorepo mínimo, bem definido, que s
 ## Decisão
 1. Usar monorepo com `pnpm` workspaces e estrutura em `apps/api` e `apps/web`.
 2. Não criar `packages/` antes da Fase 2, porque o código compartilhado ainda é overhead.
-3. Manter Prisma com as 8 tabelas iniciais: `User`, `Session`, `Project`, `AiConnection`, `EncryptedCredential`, `Conversation`, `Message`, `ProjectVersion`.
+3. Manter Prisma com as 6 tabelas iniciais da Fase 0: `User`, `Session`, `Project`, `AiConnection`, `EncryptedCredential`, `ProjectVersion`.
 4. Implementar `Session.tokenHash` como SHA-256 do token opaco, mantendo o token em cookie/cliente e o hash no servidor.
 5. Guardar `ProjectVersion.snapshotJson` em formato `{ files: { [path]: content } }` e validar antes de persistir.
 6. Definir health check enviando `SELECT 1` via Prisma com timeout de 2 segundos.

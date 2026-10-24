@@ -5,7 +5,7 @@ VORQEN is the foundation for a monorepo AI development platform. The initial sca
 - NestJS API with health checks and Prisma integration
 - Next.js web app shell
 - PostgreSQL 16 via Docker Compose
-- Prisma schema with the initial eight MVP tables
+- Prisma schema with the initial six MVP tables
 - Config validation using Zod and environment checks
 
 ## Quick start
