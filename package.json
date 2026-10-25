@@ -11,5 +11,8 @@
     "prisma:generate": "pnpm -r --if-present prisma:generate",
     "prisma:migrate": "pnpm -r --if-present prisma:migrate -- --name init",
     "lint": "pnpm -r --if-present lint"
+  },
+  "dependencies": {
+    "@prisma/client": "6.19.3"
   }
 }
