@@ -9,6 +9,8 @@ export const envSchema = z.object({
     .refine((value) => value.startsWith('postgresql://') || value.startsWith('postgres://'), {
       message: 'DATABASE_URL must use a PostgreSQL connection string',
     }),
+  JWT_SECRET: z.string().min(1).default('dev-only-insecure-jwt-secret'),
+  JWT_EXPIRES_IN: z.string().default('1d'),
 });
 
 export type Env = z.infer<typeof envSchema>;
