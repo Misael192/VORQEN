@@ -7,6 +7,9 @@
 
 generator client {
   provider = "prisma-client-js"
+  // Output explícito dentro do app: evita que o Prisma CLI tente instalar o
+  // pacote "prisma" automaticamente em ambientes onde ele já existe no workspace.
+  output   = "../apps/api/node_modules/@prisma/client"
 }
 
 datasource db {
