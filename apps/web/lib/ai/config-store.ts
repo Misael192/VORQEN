@@ -6,7 +6,22 @@
  */
 import type { ProviderConfig } from '@vorqen/ai-core';
 
-export const AI_CONFIG_STORAGE_KEY = 'vorqen.ai-provider-config';
+/** Chave única e canônica exigida pela spec da Fase 2. */
+export const AI_CONFIG_STORAGE_KEY = 'vorqen:ai-config';
+
+/** Migração suave: se houver config legada em chave antiga, move para a nova. */
+function migrateLegacyKey(): string | null {
+  if (typeof window === 'undefined') return null;
+  const current = window.localStorage.getItem(AI_CONFIG_STORAGE_KEY);
+  if (current) return current;
+  const legacy = window.localStorage.getItem('vorqen.ai-provider-config');
+  if (legacy) {
+    window.localStorage.setItem(AI_CONFIG_STORAGE_KEY, legacy);
+    window.localStorage.removeItem('vorqen.ai-provider-config');
+    return legacy;
+  }
+  return null;
+}
 
 const DEFAULT_BASE_URL = 'http://localhost:11434';
 
@@ -23,7 +38,7 @@ function fallback(): StoredConfig {
 export function readStoredAiConfig(): StoredConfig {
   if (typeof window === 'undefined') return fallback();
   try {
-    const raw = window.localStorage.getItem(AI_CONFIG_STORAGE_KEY);
+    const raw = migrateLegacyKey();
     if (!raw) return fallback();
     const parsed = JSON.parse(raw) as Partial<StoredConfig>;
     return {
