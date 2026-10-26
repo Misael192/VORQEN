@@ -41,6 +41,8 @@ model Project {
 
   owner    User            @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   versions ProjectVersion[]
+  files    ProjectFile[]
+  messages ChatMessage[]
 }
 
 model AiConnection {
@@ -69,6 +71,32 @@ model EncryptedCredential {
   updatedAt   DateTime @updatedAt
 
   connection AiConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+}
+
+model ProjectFile {
+  id        String   @id @default(cuid())
+  projectId String
+  path      String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, path])
+  @@index([projectId])
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  projectId String
+  role      String
+  content   String
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, createdAt])
 }
 
 model ProjectVersion {

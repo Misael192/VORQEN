@@ -3,11 +3,14 @@
   "private": true,
   "packageManager": "pnpm@9.15.0",
   "workspaces": [
-    "apps/*"
+    "apps/*",
+    "packages/*"
   ],
   "scripts": {
     "dev:api": "pnpm --filter api dev",
     "dev:web": "pnpm --filter web dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r --if-present test",
     "prisma:generate": "pnpm -r --if-present prisma:generate",
     "prisma:migrate": "pnpm -r --if-present prisma:migrate -- --name init",
     "lint": "pnpm -r --if-present lint"
