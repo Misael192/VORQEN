@@ -27,4 +27,5 @@ export function listRegisteredProviders(): AiProviderId[] {
 registerProvider(new OllamaLocalProvider());
 
 export * from './types';
+export * from './codegen';
 export { OllamaLocalProvider };
