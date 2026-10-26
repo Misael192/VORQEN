@@ -73,3 +73,43 @@ pnpm audit --prod
 
 ## Próxima fase
 Aguardando autorização para iniciar a Fase 1 após validação local real da Fase 0.
+
+
+---
+
+# Fase 1 — Banco de Dados (Prisma Schema)
+
+## Plano da fase
+- Modelar as 6 tabelas essenciais do MVP: User, Project, ChatMessage, ProjectFile, ProjectSnapshot e AiModelConfig.
+- Convenções: IDs `cuid()`, `createdAt`/`updatedAt` padrão, cascatas `onDelete: Cascade`.
+- Relacionamentos: Project→User; ChatMessage/ProjectFile/ProjectSnapshot→Project; AiModelConfig→User (1:1 no MVP).
+
+## Implementado
+- `prisma/schema.prisma` reescrito com o modelo de dados da Fase 1 (substitui o esboço da Fase 0).
+- Enums `ChatRole` (USER/ASSISTANT/SYSTEM) e `AiProvider` (OPENAI/ANTHROPIC/OLLAMA/CUSTOM).
+- Índices: `projects(ownerId)`, `chat_messages(projectId, createdAt)`, `project_files(projectId)`, unique `(projectId, path)` em arquivos, unique `userId` em AiModelConfig.
+- Versionamento: `ProjectSnapshot` ↔ `ProjectFile` via relação N:N (`_ProjectFileToProjectSnapshot`), permitindo rollback/previews por snapshot.
+- Segurança: `apiTokenArmored` em AiModelConfig guarda token cifrado em repouso (AES-256-GCM + envelope); chave mestra fica fora do banco (KMS/env).
+
+## Verificação executada
+- `prisma validate` → schema válido ✅ (Prisma CLI 6.19.0)
+- `prisma format` → formatado sem erros ✅
+- `prisma migrate diff --from-empty --to-schema-datamodel --script` → SQL gerado corretamente com 6 tabelas + 1 junction table, 2 enums e todos os índices/uniques ✅
+
+## Não verificado (requer Docker/Postgres local)
+- `docker compose up -d`
+- `pnpm prisma:migrate -- --name init` (aplicação real da migração)
+- `psql \dt` para confirmar as tabelas no banco
+
+## Como executar a migração
+```bash
+cp .env.example .env          # garante DATABASE_URL
+docker compose up -d          # sobe PostgreSQL 16 (vorqen-postgres)
+pnpm install                  # instala dependências do workspace
+pnpm prisma:generate          # gera o Prisma Client (apps/api)
+pnpm prisma:migrate           # prisma migrate dev --name init (aplica a migração)
+docker compose exec postgres psql -U plataforma -d plataforma -c "\dt"  # confere as 7 tabelas
+```
+
+## Próxima fase
+Fase 2 — Módulo de IA no NestJS (Controller + SSE streaming + parser de blocos de código estruturados).

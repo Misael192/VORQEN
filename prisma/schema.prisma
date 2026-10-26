@@ -1,3 +1,10 @@
+// =============================================================================
+// VORQEN — Fase 1: Modelo de dados do MVP
+// 6 tabelas essenciais: User, Project, ChatMessage, ProjectFile,
+// ProjectSnapshot e AiModelConfig.
+// Convenções: IDs via cuid(), createdAt/updatedAt padrão, cascatas onDelete.
+// =============================================================================
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,74 +14,140 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// -----------------------------------------------------------------------------
+// Enums
+// -----------------------------------------------------------------------------
+
+enum ChatRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+enum AiProvider {
+  OPENAI
+  ANTHROPIC
+  OLLAMA
+  CUSTOM
+}
+
+// -----------------------------------------------------------------------------
+// 1. User — autenticação básica da plataforma
+// -----------------------------------------------------------------------------
+
 model User {
-  id           String        @id @default(cuid())
-  email        String        @unique
+  id           String   @id @default(cuid())
+  email        String   @unique
   passwordHash String
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  sessions     Session[]
-  projects     Project[]
+  name         String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  projects      Project[]
+  aiModelConfig AiModelConfig?
+
+  @@map("users")
 }
 
-model Session {
-  id        String   @id @default(cuid())
-  userId    String
-  tokenHash String   @unique
-  userAgent String?
-  ipAddress String?
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
+// -----------------------------------------------------------------------------
+// 2. Project — workspace de um app gerado pela IA
+// -----------------------------------------------------------------------------
 
 model Project {
-  id          String          @id @default(cuid())
+  id          String   @id @default(cuid())
   ownerId     String
   name        String
   description String?
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-
-  owner    User            @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  versions ProjectVersion[]
-}
-
-model AiConnection {
-  id          String   @id @default(cuid())
-  userId      String
-  name        String
-  providerType String
-  protocol    String
-  baseUrl     String?
-  modelName   String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  credential EncryptedCredential?
+  owner     User              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  messages  ChatMessage[]
+  files     ProjectFile[]
+  snapshots ProjectSnapshot[]
+
+  @@index([ownerId])
+  @@map("projects")
 }
 
-model EncryptedCredential {
-  id          String   @id @default(cuid())
-  connectionId String  @unique
-  keyVersion  String
-  algorithm   String   @default("AES-256-GCM")
-  iv          String
-  ciphertext  String
-  authTag     String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+// -----------------------------------------------------------------------------
+// 3. ChatMessage — histórico do chat (usuário e IA), ordenável por projeto
+// -----------------------------------------------------------------------------
 
-  connection AiConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
-}
-
-model ProjectVersion {
-  id           String   @id @default(cuid())
-  projectId    String
-  snapshotJson Json
-  createdAt    DateTime @default(now())
+model ChatMessage {
+  id        String   @id @default(cuid())
+  projectId String
+  role      ChatRole @default(USER)
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, createdAt])
+  @@map("chat_messages")
+}
+
+// -----------------------------------------------------------------------------
+// 4. ProjectFile — arquivos gerados (caminho único por projeto, conteúdo, tipo)
+// -----------------------------------------------------------------------------
+
+model ProjectFile {
+  id        String   @id @default(cuid())
+  projectId String
+  path      String
+  content   String   @db.Text
+  extension String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project   Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  snapshots ProjectSnapshot[]
+
+  @@unique([projectId, path])
+  @@index([projectId])
+  @@map("project_files")
+}
+
+// -----------------------------------------------------------------------------
+// 5. ProjectSnapshot — versionamento para rollback e previews
+// Um snapshot referencia o conjunto exato de ProjectFiles que compunham o
+// projeto naquele ponto no tempo (relação N:N com ProjectFile).
+// -----------------------------------------------------------------------------
+
+model ProjectSnapshot {
+  id        String   @id @default(cuid())
+  projectId String
+  label     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project      Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectFiles ProjectFile[]
+
+  @@index([projectId, createdAt])
+  @@map("project_snapshots")
+}
+
+// -----------------------------------------------------------------------------
+// 6. AiModelConfig — provedores e tokens de IA (um por usuário no MVP)
+// apiTokenArmored: token cifrado em repouso (AES-256-GCM + envelope ASCII).
+// A chave mestra nunca vai para o banco; fica em KMS/secret manager.
+// -----------------------------------------------------------------------------
+
+model AiModelConfig {
+  id              String     @id @default(cuid())
+  userId          String     @unique
+  provider        AiProvider @default(OPENAI)
+  modelName       String     @default("gpt-4o-mini")
+  baseUrl         String?
+  apiTokenArmored String?
+  maxTokens       Int        @default(4096)
+  temperature     Float      @default(0.7)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("ai_model_configs")
 }
