@@ -9,6 +9,10 @@ export const envSchema = z.object({
     .refine((value) => value.startsWith('postgresql://') || value.startsWith('postgres://'), {
       message: 'DATABASE_URL must use a PostgreSQL connection string',
     }),
+  JWT_SECRET: z
+    .string()
+    .min(16, 'JWT_SECRET must have at least 16 characters')
+    .default('vorqen-dev-secret-change-me-0000'),
 });
 
 export type Env = z.infer<typeof envSchema>;
