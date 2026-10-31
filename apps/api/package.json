@@ -6,7 +6,7 @@
     "dev": "nest start --watch",
     "build": "nest build",
     "start": "node dist/main",
-    "prisma:generate": "PRISMA_GENERATE_SKIP_AUTOINSTALL=true prisma generate --schema=../../prisma/schema.prisma && node ../../scripts/fix-prisma-client.cjs",
+    "prisma:generate": "prisma generate --schema=../../prisma/schema.prisma && node ../../scripts/fix-prisma-client.cjs",
     "prisma:migrate": "prisma migrate dev --schema=../../prisma/schema.prisma",
     "lint": "echo 'No lint configured yet'"
   },
