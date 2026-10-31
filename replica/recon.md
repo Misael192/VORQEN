@@ -1,7 +1,7 @@
 # VORQEN AI Studio — RECON (Fase 1)
 
 Data: 2026-10-31. Alvo: o próprio produto VORQEN (projeto próprio, sem clone externo).
-Método: auditoria das 7 branches do repo https://github.com/Misael192/VORQEN em clone limpo (`~/vorqen-diag/vorqen`), builds/testes executados neste host. Evidência literal completa em `docs/DIAGNOSTIC-VALIDATED.md`.
+Método: auditoria das 9 refs do repo https://github.com/Misael192/VORQEN em clone limpo (`~/vorqen-diag/vorqen`), builds/testes executados neste host. Evidência literal completa em `docs/DIAGNOSTIC-VALIDATED.md`, `docs/BRANCH-AUDIT.md`, `docs/DB-AUDIT.md` e `docs/GAPS.md`.
 
 ## Estado atual por branch (resumo verificado)
 

@@ -1,6 +1,6 @@
 # VORQEN AI Studio — STATUS
 
-Atualizado: 2026-10-31 (Fase 1 concluída; auditoria §3 do Prompt Mestre Unificado adicionada como ADENDA em docs/DIAGNOSTIC-VALIDATED.md. Especificação canônica arquivada em docs/prompts/VORQEN_AI_STUDIO_PROMPT_MESTRE_UNIFICADO_LOVABLE.txt)
+Atualizado: 2026-10-31 (Fase 1 reexecutada com entregáveis A–F exigidos pelo usuário: BRANCH-AUDIT.md, DB-AUDIT.md, GAPS.md e ADRs 0101–0106 adicionados nesta rodada; builds/testes por branch executados hoje em clone limpo. Auditoria §3 do Prompt Mestre Unificado em docs/DIAGNOSTIC-VALIDATED.md; especificação canônica em docs/prompts/VORQEN_AI_STUDIO_PROMPT_MESTRE_UNIFICADO_LOVABLE.txt)
 Fonte de verdade do código: https://github.com/Misael192/VORQEN (clone de diagnóstico em `~/vorqen-diag/vorqen`, branch `main` = 944e1ba).
 Diagnóstico completo com evidência literal: `docs/DIAGNOSTIC-VALIDATED.md`.
 
@@ -52,6 +52,16 @@ Diagnóstico completo com evidência literal: `docs/DIAGNOSTIC-VALIDATED.md`.
 - ADR-0003: preview isolado — candidatos WebContainer vs container efêmero; decisão final na Fase 9 (host atual sem Docker).
 - ADR-0004: editor = Monaco substituindo textarea, com gate de autorização de dependência.
 - ADR-0005: camada IA = interface AIProvider do protótipo /workspace/packages/ai-core; Ollama primeiro, OpenAI-compatible segundo; chaves BYOK via EncryptedCredential.
+
+### Rodada 2026-10-31 (entregáveis D da solicitação explícita — numeração 01xx para não conflitar)
+- ADR-0101 Monorepo e stack: **ACEITO** (preservar pnpm/Next/Nest/PG16/Prisma/Zod; zero troca).
+- ADR-0102 Autenticação: **PENDENTE DO USUÁRIO** (A JWT atual / B cookie httpOnly+refresh reaproveitando Session órfã / C NextAuth). Recomendação B.
+- ADR-0103 Estrutura de pastas: **ACEITO com ajuste** (confirmar layout real; shared/agent-core/replica-tools nascem só quando necessário).
+- ADR-0104 Provider de IA prioritário: **PENDENTE DO USUÁRIO** (A Ollama / B OpenAI-compatible / C Anthropic). Recomendação A→B.
+- ADR-0105 Preview: **PENDENTE DO USUÁRIO** (A WebContainers / B containers server-side / C híbrido). Recomendação spike A.
+- ADR-0106 Execução segura: **ACEITO como política** (allowlist, spawn sem shell, timeout/limites, auditoria, confirmação humana).
+
+Novos documentos da rodada: `docs/BRANCH-AUDIT.md` (tabela build/teste por branch com saída literal), `docs/DB-AUDIT.md` (schema completo + tabela OK/DRIFT/UNDOCUMENTED), `docs/GAPS.md` (README × código, 14 linhas com evidência).
 
 ## Riscos conhecidos
 1. editor-mvp tem lockfile dessincronizado e build quebrado — nunca usar como base.

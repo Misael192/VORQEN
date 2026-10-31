@@ -1,0 +1,24 @@
+# VORQEN — GAPS: README promete × código tem (Fase 1, entregável F)
+
+Data: 2026-10-31 · Repo: https://github.com/Misael192/VORQEN · main = 944e1ba
+Cada linha com evidência literal (path:linha ou saída de comando executado neste host).
+
+| # | Promessa do README / contexto | Estado real | Evidência | Severidade p/ produto |
+|---|---|---|---|---|
+| 1 | "PostgreSQL 16 via Docker Compose" (README.md:7) e `docker compose up -d` como setup | **PARTIAL** — arquivo existe e usa postgres:16-alpine; nunca validado por execução neste host | `docker-compose.yml:5 image: postgres:16-alpine`; `docker --version` → `bash: docker: command not found` | S3 (host sem Docker não roda o stack local) |
+| 2 | "Prisma schema with the initial six MVP tables" (README.md:8) | **CONFIRMADO na main** (6 models); mas a branch mais funcional tem 8 | `grep -c '^model ' prisma/schema.prisma` → `6` (main); ci/cd → `8` | — |
+| 3 | Setup `cp .env.example .env` + `pnpm install` | **REAL** para install; **RISCO** no exemplo: `.env.example` da main contém connection string com credencial hardcoded `postgresql://plataforma:plataforma@localhost:5432/plataforma` | `cat .env.example` (main) saída literal colada no DB-AUDIT/GAPS run | S4 em dev (user/password triviais locais), mas viola estilo R4 "valores de exemplo não secretos" — trocar por placeholder |
+| 4 | API na porta 4000 (`PORT=4000`) | **PARTIAL** — config existe e zod valida; boot end-to-end não comprovado (precisa Postgres) | `apps/api/src/config/env.ts` default PORT 4000; migrate BLOCKED | S3 |
+| 5 | Web na porta 3000 (`next dev -p 3000`) | **BLOCKED build** — `pnpm -r run build` na main falha no web | erro literal: `Error: Your custom PostCSS configuration must export a 'plugins' key.` + warning `defines a field which is not supported ('default')`; causa: `apps/web/postcss.config.js` usa `exports.default = {...}` (linha 3) num arquivo CJS | **S2** na main (build de produção quebrado); já corrigido nas branches ci/cd e misael192-issue-fix |
+| 6 | Chat com IA funcional (contexto do projeto) | **TODO na main** — só existe OllamaProvider como biblioteca; nenhuma UI de chat consumindo-o | `git ls-tree -r origin/main \| grep -iE 'chat'` → vazio; ChatPanel só em ci/cd | — |
+| 7 | Autenticação (esperada pelo plano mestre Fase 3) | **TODO na main**; **PARTIAL** na ci/cd (JWT Bearer localStorage, sem httpOnly, tabela Session órfã) | main: `git ls-tree -r --name-only origin/main \| grep -iE 'auth\|jwt'` → vazio. ci/cd: `login/page.tsx:21` "token JWT salvo no localStorage" | S2 quando for base (ver ADR-0102) |
+| 8 | Editor / IDE | **TODO na main**; **PARTIAL** na ci/cd (`IDEWorkspace.tsx` com `<textarea>` linha 120, sem Monaco, sem syntax highlight) | grep monaco em todas as branches → zero | S3 |
+| 9 | Preview interativo | **TODO em todas as branches** — inclusive a que se chama "editor-mvp ... WebContainer" | `git grep -il webcontainer origin/vorqen-editor-mvp-d03f4 -- '*.ts*'` → vazio | S2 p/ objetivo do produto |
+| 10 | Testes | **ZERO na main**; 9 testes na ci/cd (jest projects + vitest ollama) | main: `pnpm -r run test` → `Scope: 3 of 4 workspace projects` sem specs; ci/cd: `Tests 4 passed (4)` + `Tests: 5 passed` | S2 p/ gates futuros |
+| 11 | CI/CD | **TODO na main**; existe `.github/workflows/ci.yml` só na ci/cd; status real das runs NÃO verificado (sem acesso à aba Actions daqui) | diff ci/cd lista o arquivo; runs = não verificadas | S3 |
+| 12 | `packages/ai-core` reutilizável (commit 944e1ba "adicionar pacote reutilizável") | **PARTIAL** — pacote existe e é importado pelo web (`"@vorqen/ai-core": "workspace:*"`), mas **sem script `build`** na main e provider único (Ollama), sem interface comum multimodelo | `cat packages/ai-core/package.json` main: scripts ausentes/limitados; arch: `"build": "tsc -p tsconfig.build.json"` | S3 |
+| 13 | Branch `vorqen-editor-mvp-d03f4` ("WebContainer IDE and E2E tests" no título do commit d5f81d2) | **REFUTADO** — sem WebContainer (item 9), build api falha 6 erros TS, sem playwright config | `ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL api@1.0.0 build: nest build`; `find playwright.config.*` → vazio | registro de honestidade: título de commit ≠ conteúdo |
+| 14 | Replica Skills / pack `replica-skill-main/` | **BLOCKED** — pack não existe em nenhuma branch nem foi fornecido neste ambiente | `ls` clone: sem diretório; branches: sem referência | desbloqueio: usuário anexar o pack |
+
+## Resumo honesto
+A main entrega scaffold (monorepo, schema 6 tabelas, health, Ollama lib) — nada além disso funciona ponta a ponta hoje. As capacidades de produto (auth, chat, editor, preview, testes, CI) existem apenas na branch `ci/cd-authentication-audit-5d2e3`, e mesmo lá com limitações documentadas (localStorage token, textarea, chat client-side direto ao Ollama). Os dois blockers de host independentes de branch: Docker/Postgres ausente e Ollama down.
