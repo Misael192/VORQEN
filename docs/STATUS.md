@@ -14,7 +14,7 @@ Diagnóstico completo com evidência literal: `docs/DIAGNOSTIC-VALIDATED.md`.
 
 | Fase | Escopo | Estado | Nota |
 |---|---|---|---|
-| 1 | Reconhecimento e planejamento | PARTIAL | Este STATUS + recon/features.csv + ADRs criados; auditoria das branches concluída com evidência. |
+| 1 | Reconhecimento e planejamento | DONE (aguarda revisão humana) | STATUS + recon/features.csv + 5 ADRs + ARCHITECTURE/ROADMAP/SECURITY/TESTING; auditoria revalidada em clone limpo nesta sessão (9 branches, main=944e1ba). Gate da Fase 2 exige aprovação do plano pelo proprietário. |
 | 2 | Arquitetura e estrutura | TODO | Estrutura-alvo definida em ADR-0001; monorepo real ainda é o da branch ci/cd, não consolidado. |
 | 3 | Autenticação e banco | PARTIAL | JWT+8 models+migrations existem na branch `ci/cd-authentication-audit-5d2e3` com 9/9 testes passando (build/test executados em clone limpo). BLOCKED para migrate/e2e contra Postgres real: sem Docker e porta 5432 fechada neste host. |
 | 4 | Dashboard e projetos | PARTIAL | CRUD projects.service.ts + spec (5 testes verdes) na ci/cd. UI de dashboard/listagem ainda mínima. |
