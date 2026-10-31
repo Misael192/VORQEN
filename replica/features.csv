@@ -1,0 +1,13 @@
+feature,area,priority,original (Lovable),clone (nosso VORQEN),notes
+Configuração local do Ollama,AI,Must,Integra provedores de IA hospedados,Endpoint e modelo escolhidos no navegador e guardados em localStorage,Chamadas diretas a localhost; configurar OLLAMA_ORIGINS no host do Ollama
+Chat com streaming,AI,Must,Chat de geração de código com respostas progressivas,Streaming direto do Ollama para o browser com histórico do projeto,Não criar proxy ou rota de API para IA
+WebContainer,Runtime,Must,Preview executável do projeto,Executa e atualiza o projeto no navegador usando StackBlitz WebContainers,Verificar origem segura e requisitos de headers
+Monaco Editor,Editor,Must,Editor de código do workspace,Editor com arquivos gerados e alterações sincronizadas ao preview,Proteger paths e validar JSON antes de gravar
+Dashboard de projetos,Projects,Must,Lista e acesso a projetos,Projetos do usuário autenticado no Supabase,Isolamento por proprietário e RLS
+Persistência de arquivos,Projects,Must,Arquivos do projeto disponíveis ao reabrir,ProjectFile no Supabase atualizado por Server Actions,Conteúdo salvo após validação client-side e autorização server-side
+Histórico de chat,AI,Must,Conversas associadas ao projeto,Mensagens persistidas por projeto no Supabase,Não armazenar configuração ou segredo de IA
+Autenticação,Platform,Must,Conta e sessão do usuário,Supabase Auth com identidade usada nas políticas de acesso,Usar sessão validada nas Server Actions
+Preview ao vivo,Runtime,Must,Visualização da aplicação gerada,Preview conectado à execução WebContainer,Exibir estados de inicialização e erro
+Validação de conexão local,AI,Should,Configuração de provedores e modelos,Teste de reachability do Ollama feito diretamente pelo navegador,Erro de CORS deve indicar ajuste no Ollama
+Edição manual de arquivos,Editor,Should,Refinamento do código gerado,Alterações no Monaco atualizam o arquivo e o preview,Salvar alterações no Supabase
+Versionamento do projeto,Projects,Could,Histórico de versões e recuperação,Snapshots futuros dos arquivos do projeto no Supabase,Fora do primeiro loop utilizável
