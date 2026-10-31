@@ -1,139 +1,101 @@
-# VORQEN — Fase A: Diagnóstico Validado
+# VORQEN — DIAGNOSTIC-VALIDATED
 
 Data: 2026-10-31
-Checkout inspecionado: `/workspace` (equivalente ao workspace esperado `C:\Users\Misael de Araujo\Documents\Projeto Vorqen`)
-URL/caminho do repo real: **não fornecido**. Nenhum remote configurado. Nenhum clone foi tentado sem URL.
+Repo clonado de: https://github.com/Misael192/VORQEN (clone público OK, sem autenticação)
+Commit da `main` inspecionada: 944e1ba12b73069f2f6865876651c28282532bd2
+Checkout de diagnóstico: `~/vorqen-diag/vorqen` (workspace `/workspace` intocado; única escrita: este arquivo)
 
----
+## Host de execução
+- Node: v20.20.2 · pnpm: 9.12.0 (corepack; package.json pede pnpm@9.15.0 — corepack baixou 9.15.0 no install) · git 2.39.5 · Python 3.12.10
+- Docker: **ausente** (`bash: docker: command not found`)
+- Acesso a binaries.prisma.sh: **OK neste host** — evidência: `pnpm install --frozen-lockfile` completou com `.../node_modules/@prisma/engines postinstall: Done` e `✔ Generated Prisma Client (v6.19.3)` (log: /tmp/install.log). A afirmação do hand-off "binaries.prisma.sh bloqueado" está **REFUTADA neste host**. (Obs.: `curl https://binaries.prisma.sh/` retorna 404 na raiz — esperado; o que importa é o download dos engines, que passou.)
+- PostgreSQL localhost:5432: **fechado** (`Connection refused`); Ollama localhost:11434: **fechado** (`Failed to connect`).
 
-## 1. Estado literal do checkout
-
-### 1.1 Git
-
-```text
-$ git status
-On branch master
-nothing to commit, working tree clean
-
-$ git branch -a
-* master
-
-$ git log --oneline -5
-c18bf6a (HEAD -> master) task snapshot 53ed0ed8-276c-4e2f-9cc7-92f771b70b72
-
-$ git remote -v
-(sem saída)
-
-$ git show-ref
-c18bf6a301fa2ccdf61f30b93601c2a2d839f222	refs/heads/master
+## Branches encontradas (saída literal de `git branch -a`)
+```
+* main
+  remotes/origin/HEAD -> origin/main
+  remotes/origin/ai-platform-similar-to-lovable-c458b
+  remotes/origin/ci/cd-authentication-audit-5d2e3
+  remotes/origin/feat/fase-1-ai-core
+  remotes/origin/main
+  remotes/origin/vorqen-editor-mvp-d03f4
+  remotes/origin/vorqen-mvp-architecture-56c9d
+  remotes/origin/vorqen-studio-identity-d0476   ← NÃO estava no roteiro (extra)
 ```
 
-**Conclusão:** o único ref existente é `master`, com 1 commit de snapshot de ferramenta. Não há branches, não há remote, não há tags.
+## Build e testes por branch
 
-### 1.2 Estrutura de arquivos
+### main (944e1ba)
+- `pnpm install --frozen-lockfile`: **ok** (exit 0, "Done in 17s")
+- `pnpm --filter api run build`: **ok** (exit 0, `nest build`)
+- `pnpm --filter web run build`: **FALHOU** (exit 1). Erro literal: `Error: Your custom PostCSS configuration must export a 'plugins' key.` + warning `Your PostCSS configuration defines a field which is not supported ('default')`. Causa em `apps/web/postcss.config.js:3` (`exports.default = {...}` em arquivo CJS — Next lê `module.exports`, que fica `{}`).
+- Testes: **nenhum** — `find . \( -name "*.spec.ts" -o -name "*.test.ts" \)` → vazio; sem script `test` nos pacotes.
 
-```text
-$ ls apps prisma replica-skill-main
-ls: cannot access 'apps': No such file or directory
-ls: cannot access 'prisma': No such file or directory
-ls: cannot access 'replica-skill-main': No such file or directory
-```
+### ci/cd-authentication-audit-5d2e3 (6440cbd)
+- `pnpm install --frozen-lockfile`: ok
+- API build: **ok** · Web build: **ok** (postcss.config.js corrigido: `module.exports = { plugins: { tailwindcss: {}, autoprefixer: {} } }`)
+- `pnpm -r --if-present test`: **ok (exit 0)** — api: `Tests: 5 passed, 5 total` (projects.service.spec.ts); ai-core: `Tests: 4 passed, 4 total` (ollama.spec.ts). Total: **9 testes unitários passando**.
+- Conteúdo confirmado: auth JWT completa (`apps/api/src/auth/{auth.controller,auth.service,jwt.strategy,jwt-auth.guard}.ts`), projects CRUD+files+chat (`apps/api/src/projects/*`), `IDEWorkspace.tsx`/`ChatPanel.tsx`/`AuthGate.tsx`, `.github/workflows/ci.yml`, schema com **8 models**, 2 migrations.
 
-Conteúdo real do checkout (excluindo `node_modules`/`dist`):
+### vorqen-editor-mvp-d03f4 (d5f81d2)
+- `pnpm install --frozen-lockfile`: **FALHOU** — `ERR_PNPM_OUTDATED_LOCKFILE` (lockfile não reflete apps/api/package.json). Com `--no-frozen-lockfile`: ok (modificou lock localmente; revertido).
+- API build: **FALHOU** (exit 1). Erros literais: `src/main.ts:16:7 - error TS2339: Property 'useBodyParser' does not exist on type 'INestApplication'`; `register.dto.ts:8:17 - error TS2559` (@MinLength string msg); `save-files.dto.ts:34:4 - Cannot find name 'MaxLength'`; TS7006 implicit any em projects.service.ts.
+- Web build: **FALHOU** (mesmo erro de postcss da main).
+- Testes: não executáveis neste estado (build quebra). Existe `apps/api/test/app.e2e-spec.ts` (supertest real contra Postgres; header do arquivo: "Se o banco nao estiver acessivel, a suite falha (sem mocks/simulacoes)").
+- `OllamaProvider.ts` de `packages/ai-core`: **APAGADO** — evidência: `git diff main origin/vorqen-editor-mvp-d03f4 -- '*OllamaProvider*'` → `packages/ai-core/src/providers/OllamaProvider.ts | 132 ------- 1 file changed, 132 deletions(-)`.
 
-```text
-.env.example
-.gitignore
-package.json                 # raiz pnpm (name "vorqen", scripts build/test delegados a @vorqen/ai-core)
-pnpm-workspace.yaml          # packages: apps/*, packages/*
-pnpm-lock.yaml
-packages/ai-core/            # README, package.json, tsconfig, src/, tests/ (ver 1.3)
-```
+### vorqen-mvp-architecture-56c9d (93c68ad)
+- `pnpm install --frozen-lockfile`: ok · API build: ok · ai-core build: ok (`tsc -p tsconfig.build.json`) · Web build: **FALHOU** (mesmo erro postcss).
+- Tem `AIConfigForm.tsx` (2 cópias: `apps/web/src/components/` e `apps/web/components/settings/`), chat client-side em `apps/web/app/projects/[id]/page.tsx`, `codegen.ts` no ai-core, skill `asd-ste100` (docs/) e `ste-lint.py` (scripts/). Schema com **6 models** (User, Project, ChatMessage, ProjectFile, ProjectSnapshot, AiModelConfig) — divergente do ci/cd. Migration própria: `20261026000000_init`.
 
-### 1.3 Inventário `packages/ai-core` (evidência: `find packages -type f`)
+## Validação das 8 afirmações de hand-off
+| # | Status | Evidência |
+|---|---|---|
+| 1 | `main` == `feat/fase-1-ai-core` | **CONFIRMADO** — `git rev-parse`: ambos `944e1ba12b73069f...`; `git log main..origin/feat/fase-1-ai-core` → 0 commits |
+| 2 | c458b já mergeada em main | **CONFIRMADO** — `git merge-base --is-ancestor origin/ai-platform-similar-to-lovable-c458b main` → exit 0 (8a33be9 é ancestral de 944e1ba) |
+| 3 | ci/cd tem JWT+CRUD+chat+IDEWorkspace+testes+CI+8 tabelas | **CONFIRMADO** — arquivos listados acima; `grep -c '^model' prisma/schema.prisma` → 8; jest: 5 passed; vitest: 4 passed; `.github/workflows/ci.yml` existe |
+| 4 | editor-mvp tem login+CRUD+WebContainer+e2e+apaga OllamaProvider | **PARCIALMENTE REFUTADO** — CONFIRMADO: login (`app/login/page.tsx`), CRUD (auth/projects no diff), apaga OllamaProvider (diff 132 deleções), e2e supertest existe. **REFUTADO: WebContainer** — `grep -ri webcontainer apps/web` → zero ocorrências; editor navega para `/editor/${id}` mas `git ls-tree` mostra que só existem páginas `globals.css/layout/login/page` (rota órfã); nenhum iframe/preview/monaco em files.ts |
+| 5 | arch tem ai-core completo + AIConfigForm + schema divergente | **CONFIRMADO** — ai-core com build script + codegen.ts + ollama.ts; AIConfigForm.tsx presente; schema 6 models vs 8 do ci/cd |
+| 6 | Build da API passa na main | **CONFIRMADO** — `API_BUILD_EXIT=0` (/tmp/build-api-main.log) |
+| 7 | Build web falha na main por postcss.config.js | **CONFIRMADO** — `WEB_BUILD_EXIT=1`; erro literal `Error: Your custom PostCSS configuration must export a 'plugins' key.`; causa: `exports.default` em `apps/web/postcss.config.js:3` |
+| 8 | ai-core sem script build na main | **CONFIRMADO** — `git show main:packages/ai-core/package.json | grep -c '"build"'` → 0 (só name/exports/deps ollama) |
 
-```text
-packages/ai-core/package.json
-packages/ai-core/tsconfig.json
-packages/ai-core/README.md
-packages/ai-core/src/index.ts
-packages/ai-core/src/types/{chat.ts, provider.ts, schemas.ts, index.ts}
-packages/ai-core/src/providers/{OpenAICompatible.ts, AnthropicProvider.ts, OllamaProvider.ts, CustomProvider.ts, registry.ts}
-packages/ai-core/src/errors/index.ts
-packages/ai-core/src/utils/{sse.ts, messages.ts}
-packages/ai-core/tests/{openai-compatible.test.ts, anthropic-ollama.test.ts, registry.test.ts, retry.test.ts, sse.test.ts}
-```
+Extra (fora das 8): a branch `vorqen-studio-identity-d0476` também existe no remoto (commits "task snapshot") — conteúdo não inspecionado nesta fase.
 
-### 1.4 Builds e testes executados neste host (saída literal)
-
-```text
-$ cd packages/ai-core && pnpm build
-> @vorqen/ai-core@0.1.0 build
-> tsc -p tsconfig.json
-BUILD_EXIT=0
-
-$ pnpm test
- ✓ tests/retry.test.ts (4 tests) 6ms
- ✓ tests/sse.test.ts (3 tests) 3ms
- Test Files  5 passed (5)
-      Tests  25 passed (25)
-TEST_EXIT=0
-```
-
----
-
-## 2. Validação das afirmações do hand-off
-
-| # | Afirmação (hand-off) | Veredito | Evidência |
+## Capacidades por módulo
+| Capacidade | Status | Evidência | Desbloqueio |
 |---|---|---|---|
-| H1 | `main` existe | **REFUTADA** | `git branch -a` → apenas `master` (seção 1.1). |
-| H2 | `feat/fase-1-ai-core` igual à main | **REFUTADA** | branch inexistente (`git show-ref`: só `refs/heads/master`). |
-| H3 | `ai-platform-similar-to-lovable-c458b` incorporada à main | **NÃO VERIFICÁVEL** | nenhuma das duas branches existe neste checkout. |
-| H4 | `ci/cd-authentication-audit-5d2e3` (login JWT, projetos, chat, IDEWorkspace, testes, CI, 8 tabelas Prisma) | **REFUTADA / AUSENTE** | branch inexistente; `apps/api`, `apps/web`, `prisma/` não existem no disco (seção 1.2). Nada de auth/JWT/CI neste checkout. |
-| H5 | `vorqen-editor-mvp-d03f4` (WebContainer, e2e, apaga OllamaProvider) | **REFUTADA / AUSENTE** | branch inexistente; `OllamaProvider.ts` está presente em `packages/ai-core/src/providers/` (seção 1.3) — nada foi apagado neste checkout. |
-| H6 | `vorqen-mvp-architecture-56c9d` (`ai-core` completo, `AIConfigForm`, schema próprio) | **PARCIALMENTE CONFIRMÁVEL** | branch inexistente. Um `ai-core` funcional existe **neste checkout** (build+testes verdes, seção 1.4), mas não é possível atribuí-lo à branch citada nem localizar `AIConfigForm` ou schema Prisma desta branch (arquivos ausentes). |
-| H7 | Build da API passaria | **NÃO VERIFICÁVEL** | `apps/api` não existe (`ls: cannot access 'apps'`). |
-| H8 | Build web falharia por `postcss.config.js` | **NÃO VERIFICÁVEL** | `apps/web` não existe; nenhum `postcss.config.js` no checkout. |
-| H9 | `ai-core` sem script de build | **REFUTADA** | `packages/ai-core/package.json` possui `"build": "tsc -p tsconfig.json"`; execução acima: `BUILD_EXIT=0`. |
-| H10 | Prisma/Postgres/Ollama `BLOCKED` neste host (binaries.prisma.sh bloqueado, sem Docker) | **CONFIRMADA POR AUSÊNCIA + NÃO REPRODUZIDA** | `prisma/` não existe no checkout (nada para migrar); sem `DATABASE_URL` configurada. Não executei teste de rede contra binaries.prisma.sh nesta sessão — registro como não reproduzido aqui. Instrução de desbloqueio na seção 4. |
+| Auth (login/cadastro JWT) | **PARTIAL** | Código real na ci/cd (auth.service/controller/jwt.strategy) + 5 testes jest passando; nunca exercitado contra Postgres real aqui (porta 5432 fechada) | Subir Postgres (docker-compose.yml existe, mas Docker ausente neste host) e rodar `prisma migrate deploy` + e2e |
+| CRUD de projetos | **PARTIAL** | projects.service.ts + spec com ownership tests (Forbidden/NotFound) verdes; sem teste ponta a ponta com banco real neste host | idem |
+| Chat com IA real (não mock) | **PARTIAL** | ChatPanel usa `createProvider('ollama', baseUrl)` + `provider.streamChat()` de verdade (ChatPanel.tsx:30,50) — sem setTimeout fake; porém requer Ollama local, porta 11434 fechada | Rodar Ollama + modelo `llama3.1`, ou adicionar provider cloud (Fase C) |
+| Streaming de resposta de LLM | **PARTIAL** | `streamChat` com ReadableStream reader no ChatPanel; 4 testes vitest em ollama.spec.ts passando | idem (endpoint vivo p/ smoke manual) |
+| packages/ai-core (interface multimodelo) | **BLOCKED** | Só implementa `ILLMProvider` com **Ollama**; `createProvider` lança `Provedor "openai"/"anthropic" ainda não implementado` (index.ts:8); não satisfaz o contrato `<arquitetura_multimodelo>` (identify/listModels/reportCapabilities/healthCheck ausentes) | Implementar adaptadores OpenAI/Anthropic + contrato AIProvider (escopo Fase C; existe referência local em /workspace/packages/ai-core com testes) |
+| OllamaProvider | **PARTIAL** | Real, testado (4/4 vitest na ci/cd); APAGADO na editor-mvp (132 deleções) — não fazer merge dessa branch inteira | idem chat |
+| Provider cloud (OpenAI/Anthropic/Gemini) | **BLOCKED** | Nenhum código em nenhuma branch (`git ls-tree` arch: só ollama.ts) | Implementar + chaves via env do usuário (R11) |
+| Editor de código (Monaco) | **BLOCKED** | Zero ocorrências de "monaco" em qualquer branch (git grep); IDEWorkspace.tsx = textarea + lista de arquivos | Adicionar dependência (R9: exige autorização) |
+| Preview (WebContainer / sandbox) | **BLOCKED** | Zero ocorrências de "webcontainer"/"@stackblitz" no repo inteiro; nenhuma página /editor/[id] na editor-mvp | Decisão de arquitetura Fase B/C (WebContainer exige COOP/COEP headers + HTTPS) |
+| Execução de skill Replica (parity/contrast/sweep/listing) | **BLOCKED** | Diretório `replica-skill-main/` não existe em nenhuma branch; só artefatos estáticos em `replica/` na main (recon.md, features.csv, design) e skill `asd-ste100` na arch | Escrever as ferramentas Python (Etapa 1–10 do pipeline) |
+| Schema Prisma + migrations | **PARTIAL** | Migrations versionadas em todas as branches (init 20261025175706; phase4 na ci/cd); generate ok; `migrate`/`db push` nunca rodou aqui (sem DB) | Postgres acessível + `pnpm prisma:migrate` |
+| Testes E2E (Playwright) | **BLOCKED** | Nenhum `playwright.config.*` em nenhuma branch; único e2e é supertest (editor-mvp, build quebrado) | Adicionar Playwright (R9) + app rodando |
+| CI (GitHub Actions) | **PARTIAL** | `.github/workflows/ci.yml` existe na ci/cd (install→generate→build→test, Node 20/pnpm 9); status de execução no GitHub não verificável daqui (sem gh/auth) | Conferir aba Actions do repo |
+| Docker / containers no host | **BLOCKED** | `bash: docker: command not found` | Instalar Docker ou usar Postgres gerenciado/NativePostgres |
 
-**Resumo honesto:** as quatro branches nomeadas no contexto técnico **não existem neste ambiente**. O repositório real do VORQEN não está acessível em `/workspace`. Portanto, a leitura "end-to-end" de `apps/api`, `apps/web`, `prisma/` e testes deles **não pôde ser feita** — não por falha de análise, mas porque os artefatos não estão presentes. Nenhuma conclusão sobre esse código foi inventada.
+## Bloqueios no host
+1. **Sem Docker** → desbloqueio: instalar Docker Engine ou apontar `DATABASE_URL` para Postgres externo.
+2. **Postgres 5432 fechado** → desbloqueio: `docker compose up -d` (compose existe na main) quando Docker disponível, ou `scripts/setup-local-db.sh`, ou Postgres gerenciado.
+3. **Ollama 11434 fechado** → desbloqueio: instalar Ollama + `ollama pull llama3.1`, OU configurar chave cloud via env (nomes em .env.example; valores só pelo usuário — R11).
+4. **editor-mvp com lockfile dessincronizado** → desbloqueio: `pnpm install --no-frozen-lockfile` + commit do lock na Fase B (se a branch for aproveitada).
 
----
+## Três decisões para Fase B
 
-## 3. Classificação de capacidades (apenas o que existe no checkout)
+1. **Branch base do VORQEN Studio: `ci/cd-authentication-audit-5d2e3`.** É a única com web+api builds verdes ao mesmo tempo, testes passando (9/9), CI, auth JWT, 8 tabelas e postcss corrigido. Justificativa de rebranding (R3): o nome da branch referencia "authentication audit"; renomear para `base/studio` antes de evoluir. Da `vorqen-mvp-architecture` trazer apenas `codegen.ts`/`AIConfigForm`/skill `asd-ste100` se úteis; da `vorqen-editor-mvp` trazer apenas `test/app.e2e-spec.ts` + seed (`prisma/seed/`) — **nunca merge inteiro** (apaga OllamaProvider e quebra o build).
+2. **Schema Prisma canônico: o da ci/cd (8 models, migrations init+phase4).** Motivo técnico: é o único compatível com o código de auth/projects que compila e testa verde; o da arch (6 models, AiModelConfig) conflita e não tem serviço correspondente funcional. Divergência a resolver: adicionar tabela de credencial criptografada já existe (EncryptedCredential) — vantagem sobre arch.
+3. **Provider de IA prioritário para Fase C: Ollama local primeiro, OpenAI-compatible segundo.** Ollama já é REAL-PARTIAL (único adaptador existente, com testes); para o produto funcionar neste host basta o usuário instalar Ollama + `llama3.1`. Cloud vem em seguida porque hoje **não existe nenhum** adaptador cloud nas branches — o usuário precisa fornecer `OPENAI_API_KEY`/`ANTHROPIC_API_KEY` via variável de ambiente (nunca em código/prompt — R11).
 
-| Capacidade | Status | Motivo / evidência | Instrução de desbloqueio |
-|---|---|---|---|
-| `packages/ai-core` — contrato `AIProvider` + adaptadores OpenAI/Anthropic/Ollama/Custom + registry + erros/retry + parser SSE | **REAL (camada de código)** | build exit 0; 25/25 testes passando (seção 1.4). Testes usam fetch mockado em nível de rede — o protocolo é exercitado de verdade, a chamada remota não. | Para operação ponta a ponta: definir `OPENAI_API_KEY` ou `ANTHROPIC_API_KEY` no ambiente (nomes já em `.env.example`; valores nunca no repo — R11) e rodar um smoke `healthCheck()` contra o provedor real. |
-| Chat IA com provider real (produto) | **BLOCKED** | não há `apps/api`/`apps/web` que consumam ai-core neste checkout. | Fornecer URL/caminho do repo real (branch `ci/cd-authentication-audit-5d2e3` ou equivalente) para conectar a UI/API ao pacote. |
-| Login JWT / projetos / auth | **BLOCKED** | código ausente (afirmação H4 não verificável aqui). | idem — repo real. |
-| Preview WebContainer | **BLOCKED** | código ausente (afirmação H5 não verificável aqui). | idem — repo real. |
-| Prisma / PostgreSQL | **BLOCKED** | `prisma/` ausente; sem `DATABASE_URL`. | repo real + Postgres acessível (Docker ou instância gerenciada) + `pnpm prisma generate/migrate`. |
-| Ollama local | **BLOCKED** | binário/serviço não disponível neste host; adaptador existe e é testado offline, mas nunca chamou um `/api/chat` real aqui. | instalar/rodar Ollama no host do usuário e apontar `OLLAMA_BASE_URL`. |
-| Pipeline Replica (`replica-skill-main/`, `packages/replica-tools/`) | **BLOCKED** | diretórios ausentes. | importar/criar as skills (Etapa 1+ do pipeline). |
-| CI/CD | **BLOCKED** | nenhum workflow no checkout. | repo real (a branch ci/cd supostamente traz). |
-
-Nota de precisão (R2): `ai-core` é classificado **REAL como biblioteca** (compila, testes de protocolo passam). Ele **não** é "chat funcional ponta a ponta" porque não há aplicação usando-o neste checkout — por isso o produto permanece BLOCKED.
-
----
-
-## 4. Decisões pendentes para a Fase B
-
-Não posso validar as decisões pedidas (branch base, schema canônico, provider prioritário) contra branches inexistentes. Registro a recomendação condicionada:
-
-1. **Branch base:** decisão suspensa. Recomendação do roteiro era `ci/cd-authentication-audit-5d2e3`; não verificável aqui. Pré-requisito: obter acesso ao repo real.
-2. **Schema Prisma canônico:** decisão suspensa — nenhum `schema.prisma` existe neste checkout para comparar.
-3. **Provider prioritário:** **OpenAI-compatible via `OpenAICompatible.ts`** — única escolha sustentada por evidência local (implementação + testes verdes; menor atrito de credencial). Anthropic como segundo (também testado); Ollama mantido obrigatoriamente (multimodelo; a branch que o apaga deve ser descartada conforme contexto técnico).
-
----
-
-## 5. Bloqueio principal e pedido ao usuário
-
-**Bloqueio:** o checkout real do VORQEN não está acessível. `/workspace` contém apenas um snapshot de sessão anterior (ai-core + scaffolding pnpm), sem as branches citadas.
-
-**Para desbloquear (qualquer uma das opções):**
-- Informar a URL do remote (ex.: `https://github.com/<user>/vorqen.git`) para eu executar `git remote add origin <url> && git fetch --all` e então validar H1–H10 com evidência literal; ou
-- Montar/copiar o checkout real para dentro deste ambiente.
-
-Esta fase não alterou código, schema, dependências ou configuração. A única escrita foi este arquivo (`docs/DIAGNOSTIC-VALIDATED.md`).
+## O que NÃO foi verificado e por quê
+- Execução real de auth/CRUD/chat ponta a ponta: sem Postgres nem Ollama neste host.
+- Status verde/vermelho do GitHub Actions: exige acesso autenticado ao repo.
+- Branch `vorqen-studio-identity-d0476`: fora do escopo pedido; não inspecionada além da existência.
+- `pnpm -w run build` na raiz da main: main não tem script `build` raiz (só ci/cd tem); usei builds filtrados por pacote com evidência de exit code.
+- Qualidade visual/acessibilidade das telas: fora do escopo da Fase A.
