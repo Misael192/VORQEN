@@ -1,0 +1,28 @@
+feature,area,priority,original,clone,notes
+Cadastro/login JWT,auth,must,PARTIAL,ci/cd-5d2e3,código+5 testes jest verdes; e2e contra Postgres BLOCKED (sem DB no host)
+Sessão httpOnly/JWT guard,auth,must,PARTIAL,ci/cd-5d2e3,passport-jwt presente; cookie flag a auditar na Fase 12
+CRUD de projetos,projects,must,PARTIAL,ci/cd-5d2e3,projects.service.spec verde (ownership test incluído)
+Persistência de arquivos do projeto,files,must,PARTIAL,ci/cd-5d2e3,ProjectFile + save-files dto; path traversal a testar
+Histórico de chat persistido,chat,must,PARTIAL,ci/cd-5d2e3,ChatMessage model + save-chat-message dto
+Chat com provedor real via backend,ai,must,TODO,,hoje browser fala direto com Ollama (ChatPanel.tsx:30); mover p/ API Fase 6
+Streaming de resposta LLM,ai,must,PARTIAL,ws-ai-core protótipo,streamMessage implementado/testado (SSE/NDJSON) no pacote local; integração ao app TODO
+Modos PLAN/CHAT/BUILD,agent,must,TODO,,contrato definido no prompt mestre; zero código
+Ferramentas de agente (files.read/write/patch/git.commit/commands.run),agent,must,TODO,,Fase 7; schemas Zod; allowlist de comandos
+ai-core multimodelo (OpenAI/Anthropic/Ollama/compatível),ai,must,REAL,ws packages/ai-core,25/25 vitest; tsc exit 0; portar p/ repo na Fase 2/5
+BYOK + criptografia de chave,ai,must,PARTIAL,ci/cd schema,EncryptedCredential model existe; UI+backend de conexão TODO
+Listagem dinâmica de modelos,ai,should,PARTIAL,ws-ai-core,listModels por provider testada com mock; tela TODO
+Health check de provider (2s),ai,should,REAL,ws-ai-core,teste verde; expor via endpoint na Fase 5
+Editor Monaco,ide,must,TODO,,substitui textarea (IDEWorkspace.tsx:120); exige autorização de dependência (R3)
+Explorador de arquivos + abas + diff,ide,must,TODO,,Fase 8
+Preview isolado (WebContainer ou sandbox),preview,must,BLOCKED,,nenhuma branch tem WebContainer; Docker ausente no host; ADR-0003
+Terminal/logs de execução,preview,should,TODO,,depende do sandbox
+Snapshots/restauração,history,should,PARTIAL,ci/cd-5d2e3,ProjectVersion model; UI diff/restore TODO
+Exportação de projeto,projects,should,TODO,,zip/download pela API
+GitHub OAuth/import/push,integrations,should,TODO,,APIs oficiais; escopos mínimos; Fase 11
+Isolamento multiusuário comprovado por teste,security,must,PARTIAL,ci/cd spec unit,spec ownership passa; teste e2e 2-usuários pendente (DB)
+Rate limiting auth/IA,security,must,TODO,,@nestjs/throttler ausente nos manifests verificados
+CI Actions,infra,should,PARTIAL,ci/cd-5d2e3,ci.yml presente; run real não verificado (sem acesso Actions)
+Docker Compose Postgres,infra,should,BLOCKED,,docker: command not found neste host
+Skills Replica (parity/contrast/sweep/listing),tooling,should,BLOCKED,,pack replica-skill-main não fornecido no ambiente
+Monetização Stripe test-mode,billing,could,TODO,,Fase 13; preços = decisão do proprietário
+Landing/marketing original,brand,could,TODO,,identidade VORQEN própria; sem copy do Lovable
