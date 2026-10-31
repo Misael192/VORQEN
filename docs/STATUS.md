@@ -1,6 +1,6 @@
 # VORQEN AI Studio — STATUS
 
-Atualizado: 2026-10-31 (Fase 1 — Reconhecimento e planejamento)
+Atualizado: 2026-10-31 (Fase 1 concluída; auditoria §3 do Prompt Mestre Unificado adicionada como ADENDA em docs/DIAGNOSTIC-VALIDATED.md. Especificação canônica arquivada em docs/prompts/VORQEN_AI_STUDIO_PROMPT_MESTRE_UNIFICADO_LOVABLE.txt)
 Fonte de verdade do código: https://github.com/Misael192/VORQEN (clone de diagnóstico em `~/vorqen-diag/vorqen`, branch `main` = 944e1ba).
 Diagnóstico completo com evidência literal: `docs/DIAGNOSTIC-VALIDATED.md`.
 

@@ -112,3 +112,30 @@ Status avaliado na melhor branch (ci/cd-authentication-audit-5d2e3), pois é a �
 - Conteúdo útil da branch extra `vorqen-studio-identity-d0476`: fora do roteiro; inspeção rasa apenas (3 task snapshots).
 - Qualidade visual/acessibilidade das telas: não auditado (sem browser/axe no escopo desta fase).
 - `replica/` artifacts na main (recon.md, features.csv): existem como documentos; nenhuma ferramenta Python correspondente foi validada (inexistentes).
+
+---
+
+## ADENDA 2026-10-31 — Auditoria §3 do Prompt Mestre Unificado (Lovable)
+
+Fonte: clone limpo `~/vorqen-diag/vorqen` (main = origin/main, working tree limpo). Comandos executados nesta sessão, saída literal abaixo.
+
+### README da main verificado (afirmação por afirmação)
+| Alegação do README | Veredito | Evidência |
+|---|---|---|
+| Monorepo pnpm | CONFIRMADO | `pnpm-workspace.yaml`, scripts raiz `dev:api/dev:web/prisma:generate/prisma:migrate/lint` |
+| API NestJS com health checks + Prisma | CONFIRMADO em código | `apps/api/src/main.ts:14` `app.listen(env.PORT,'0.0.0.0')`; módulo health presente. NÃO validado em runtime (Postgres indisponível no host) |
+| Web Next.js | CONFIRMADO em estrutura | `apps/web/` presente; build da main falha em postcss (ver seção principal) |
+| PostgreSQL 16 via Docker Compose | CONFIRMADO em arquivo | `docker-compose.yml:5` `image: postgres:16-alpine`. Execução BLOCKED: sem Docker neste host |
+| Schema com seis tabelas iniciais | CONFIRMADO | `grep -c '^model ' prisma/schema.prisma` = 6 → User(11), Session(21), Project(34), AiConnection(46), EncryptedCredential(60), ProjectVersion(74) |
+| Validação Zod de env | CONFIRMADO | config/env com zod (leitura direta); não exercitado em runtime |
+| API porta 4000 / web 3000 | DOCUMENTADO | `main.ts` usa `env.PORT`; README declara 4000/3000. Não testado em runtime |
+
+### Estado real da main (vs. branches)
+- Auth na main: AUSENTE (`git ls-tree -r origin/main | grep -iE "auth|jwt"` → vazio). O README descreve scaffold, não produto com login.
+- ai-core na main: mínimo — 4 arquivos (`package.json`, `src/index.ts`, `src/types.ts`, `providers/OllamaProvider.ts`). Sem script de build (confirma alegação #8 do hand-off).
+- Testes na main: NENHUM (`git ls-tree -r origin/main | grep -E "\.spec\.|\.test\."` → vazio).
+- Contagem de models por branch: main=6, vorqen-mvp-architecture=6, ci/cd-authentication-audit=8 (confirma ADR-0002: schema ci/cd é o mais completo e canônico).
+- Branches totais: 9 refs remotas (as 6 do roteiro + misael192-issue-fix + vorqen-studio-identity-d0476 + HEAD).
+
+### Consequência para o plano (Fases §17)
+A Fase 3 do prompt unificado ("auditar schema, completar auth") deve partir da branch ci/cd (8 models, JWT+specs verdes), não da main (6 models, sem auth). Os comandos do README (`docker compose up -d`, `prisma migrate`) permanecem BLOCKED neste host (Docker ausente; 5432 fechada) — registrar como tal, não executar cegamente (instrução explícita do próprio prompt §3).
